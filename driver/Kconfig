@@ -1,0 +1,5 @@
+config GPIO_CTL
+    bool "Demo GPIO LED Control Driver"
+    depends on GPIOLIB
+    help
+      Simple platform driver to control LED via GPIO.
