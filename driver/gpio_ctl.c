@@ -26,7 +26,6 @@ enum {
 static int led_status = 0;
 
 static int gpio_open(struct inode *inode, struct file *file) {
-    file->f_pos = 0;
     return 0;
 }
 
@@ -51,16 +50,28 @@ static ssize_t gpio_write(struct file *file, const char __user *buf, size_t len,
 }
 
 static ssize_t gpio_read(struct file *file, char __user *buf, size_t len, loff_t *off) {
-    char kbuf[4];
+    char kbuf[16];
     int bytes;
+    if (*off > 0)
+        return 0;
+
+    if (led_gpio)
+        led_status = gpiod_get_value(led_gpio);
 
     bytes = snprintf(kbuf, sizeof(kbuf), "%d\n", led_status);
-    return simple_read_from_buffer(buf, len, off, kbuf, bytes);
+
+    if (copy_to_user(buf, kbuf, bytes))
+        return -EFAULT;
+
+    *off += bytes; 
+    return bytes;
 }
 
 static long gpio_ioctl(struct file *file, unsigned int cmd, unsigned long arg) {
     switch (cmd) {
         case IOCTL_GET_STATUS:
+            if (led_gpio)
+                led_status = gpiod_get_value(led_gpio);
             return led_status;
         case IOCTL_SET_ON:
             gpiod_set_value(led_gpio, 1);
