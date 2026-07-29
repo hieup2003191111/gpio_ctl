@@ -1,0 +1,4 @@
+config BR2_PACKAGE_APP
+    bool "app"
+    help
+      Simple LED control app using gpio_ctl driver.
